@@ -46,8 +46,8 @@ class QuanshuwangSpider(scrapy.Spider):
         yield Request(url=bookMeta["link"],meta=bookMeta,callback=self.parse_book)
     def parse_book(self,response) :
         "书籍详情列表,章节获取"
-        print "章节获取...."
         bookMeta = response.meta
+        print bookMeta["title"],"status=",bookMeta["status"]
         for li in response.xpath("//div[@class='chapterNum']/ul/div[@class='clearfix dirconone']/li"):
             chapterName = li.xpath("a/text()").extract_first().encode("utf-8")
             chapterUrl = li.xpath("a/@href").extract_first()
@@ -56,4 +56,5 @@ class QuanshuwangSpider(scrapy.Spider):
     def parse_book_chapter(self,response) :
         "书籍具体章节详情"
         bookMeta = response.meta
+        print ""
         print response.xpath("//div[@id='content']").extract_first().encode("utf-8")
