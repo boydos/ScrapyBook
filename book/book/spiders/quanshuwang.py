@@ -2,12 +2,12 @@
 import scrapy
 from scrapy.http import Request
 from book.items import BookItem,BookType
-
+from book.files.BookUtils import BookUtils
 class QuanshuwangSpider(scrapy.Spider):
     name = 'quanshuwang'
     allowed_domains = ['www.quanshuwang.com']
     start_urls = ['http://www.quanshuwang.com/']
-
+    bookutils = BookUtils()
     def parse(self, response):
 
         print "书籍爬虫..."
@@ -49,12 +49,15 @@ class QuanshuwangSpider(scrapy.Spider):
         bookMeta = response.meta
         print bookMeta["title"],"status=",bookMeta["status"]
         for li in response.xpath("//div[@class='chapterNum']/ul/div[@class='clearfix dirconone']/li"):
-            chapterName = li.xpath("a/text()").extract_first().encode("utf-8")
+            bookMeta["chapterName"] = li.xpath("a/text()").extract_first().encode("utf-8")
             chapterUrl = li.xpath("a/@href").extract_first()
-            print chapterName,"连接:",chapterUrl
+            if not chapterUrl.startswith("http") :
+                chapterUrl = response.url + chapterUrl
+            print "now ",chapterUrl
+            yield Request(url=chapterUrl,meta=bookMeta,callback=self.parse_book_chapter)
 
     def parse_book_chapter(self,response) :
         "书籍具体章节详情"
         bookMeta = response.meta
-        print ""
-        print response.xpath("//div[@id='content']").extract_first().encode("utf-8")
+        content= response.xpath("//div[@id='content']").extract_first().encode("utf-8")
+        self.bookutils.createBookDetail(bookMeta["title"],bookMeta["chapterName"],content)
